@@ -19,6 +19,7 @@ const query_GET_entries = "SELECT date, ts, temperature, humidity FROM entries_b
 //this has to be solved client-side, eg. after logging in get userid and also the devices have to be settable to its users id
 const uuid_v4_regex = "/^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i";
 
+
 http.createServer(function (request, response) {
     if (request.method == "GET") {
         if(VERBOSE)
@@ -105,6 +106,7 @@ http.createServer(function (request, response) {
             }
             
             if(VERBOSE){
+                console.log(content.user_id);
                 console.log(content.device_id);
                 console.log(content.temperature);
                 console.log(content.humidity);
@@ -118,7 +120,7 @@ http.createServer(function (request, response) {
 
 
 
-            let params = [userid, time, content.device_id, content.humidity, content.temperature];
+            let params = [content.user_id, time, content.device_id, content.humidity, content.temperature];
             client.execute(query_POST, params, {prepare : true}).then((result) => {
                 if(VERBOSE)
                     console.log("Logged...");

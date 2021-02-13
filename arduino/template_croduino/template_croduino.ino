@@ -5,7 +5,7 @@
 //wifi part
 const char* wifi_ssid = "";
 const char* wifi_password = "";
-const char* host = "192.168.1.2"; //make sure that your address is correct
+const char* host = "192.168.1.2";
 const uint16_t host_port = 8081;
 
 WiFiClient client;
@@ -29,8 +29,9 @@ int servo_position = 90;
 String POST_data = "";
 //variables end
 
-//constants for userid -> HAS TO BE SET TO VALID UUID
+//constants
 const String UUID = "798e8266-6f3c-3bf5-b8c8-56fb14b60a56";
+const String userUUID = "5e0a6e2d-90f6-45a5-ae1a-d26e8e42b68e";
 //constants end
 
 float float_map(float x, float in_min, float in_max, float out_min, float out_max) {
@@ -111,7 +112,7 @@ void loop() {
 
   if (WiFi.status() == WL_CONNECTED) {
     if (client.connect(host, host_port)) {
-      POST_data = "{\"device_id\":\"" + UUID + "\",\"temperature\":" + temperature + ",\"humidity\":" + humidity + "}";
+      POST_data = "{\"user_id\":\"" + userUUID + "\",\"device_id\":\"" + UUID + "\",\"temperature\":" + temperature + ",\"humidity\":" + humidity + "}";
       Serial.println(POST_data);
       client.println("POST /new_entry HTTP/1.1");
       client.print("Host: ");
