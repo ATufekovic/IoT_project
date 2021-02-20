@@ -86,9 +86,9 @@
             }).then((values) => {
                 data = values[0].concat(values[1]);
             })
-            .then(()=> console.log(data))
-            .then(()=> this.convertUUID())
-            .then(()=> this.draw())
+            .then(() => console.log(data))
+            .then(() => this.convertUUID())
+            .then(() => this.draw())
         }
 
         var containerWidth = document.getElementById("mainContainer").clientWidth;
