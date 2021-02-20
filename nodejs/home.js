@@ -1,5 +1,6 @@
 const http = require('http');
 const cassandra = require('cassandra-driver');
+const { connect } = require('http2');
 //const uuid = require('uuid');
 
 const client = new cassandra.Client({
@@ -14,7 +15,7 @@ const VERBOSE = true;
 // userid -> uuid, date -> date("YYYY-MM-DD"), [ts -> timeuuid], deviceid -> uuid, humidity -> float, temperature -> integer
 const query_POST_entry = "INSERT INTO entries_by_userid (userid, date, ts, deviceid, humidity, temperature) VALUES (?, ?, now(), ?, ?, ?);";
 
-const query_GET_entries = "SELECT date, ts, temperature, humidity FROM entries_by_userid WHERE userid = ? AND date = ?;";
+const query_GET_entries = "SELECT date, ts, temperature, humidity, deviceid FROM entries_by_userid WHERE userid = ? AND date = ?;";
 
 const query_POST_auth = "SELECT userid FROM users WHERE username = ? AND password = ?;";
 
@@ -24,6 +25,7 @@ const query_POST_new_user = "INSERT INTO users (username, password, userid) VALU
 //this has to be solved client-side, eg. after logging in get userid and also the devices have to be settable to its users id
 const uuid_v4_simple_regex = "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}";
 
+let test_content = "Please use the correct URLs.";
 
 http.createServer(function (request, response) {
     if (request.method == "GET") {
@@ -32,35 +34,43 @@ http.createServer(function (request, response) {
         let req_url = new URL(request.url, "http://" + request.headers.host);
 
         if (request.url == "/test" || request.url == "/") {
-            response.writeHead(200, { 'Content-Type': 'application/json' });
-            response.write(JSON.stringify({ "name": "some", "age": 4, "lacks": "shame" }));
+            response.writeHead(200, { 'Content-Type': 'text/html' });
+            response.write(test_content);
             response.end();
             if (VERBOSE)
                 console.log('Served GET(test)...');
 
-            //rip apart request.url to get path and query parameters
-
-
         } else if (req_url.pathname == "/get_entries") {
-            let queries = {};
-            req_url.searchParams.forEach((value, key) => {
-                queries[key] = value;
-            });
+            let queries = {userid:"",date:""};
+            try {
+                req_url.searchParams.forEach((value, key) => {
+                    queries[key] = value;
+                });
 
-            if (!(queries.userid.match(uuid_v4_simple_regex))) {
-                if (VERBOSE)
-                    console.log("Match: " + queries.userid.match(uuid_v4_simple_regex));
+                if (!(queries.userid.match(uuid_v4_simple_regex))) {
+                    if (VERBOSE)
+                        console.log("Match: " + queries.userid.match(uuid_v4_simple_regex));
+                    response.writeHead(400, { "Content-Type": "text/html" });
+                    response.write("BAD_DATA");
+                    response.end();
+                    if (VERBOSE)
+                        console.log("Served bad GET(UUID)...");
+                    return;
+                }
+
+            } catch (error) {
                 response.writeHead(400, { "Content-Type": "text/html" });
-                response.write("Invalid UUID");
+                response.write("BAD_DATA");
                 response.end();
-                if (VERBOSE)
-                    console.log("Served bad GET(UUID)...");
+                if(VERBOSE)
+                    console.log("No data");
                 return;
             }
 
+            
+
             if (VERBOSE)
                 console.log(queries);
-
 
             let rows = [];
             let params = [queries.userid, queries.date];
@@ -104,11 +114,25 @@ http.createServer(function (request, response) {
                     console.log(error.message);
                 response.writeHead(500, { "Content-Type": "text/html" });
                 response.end("ERROR_EXPECTED_JSON");
+                return;
             }
 
             if (request.url == "/new_entry") {
                 response.writeHead(200, { "Content-Type": "text/html" });
                 response.end("OK");
+
+                try {
+                    if(content.user_id === undefined || content.device_id === undefined || content.temperature === undefined || content.humidity === undefined){
+                        //if some part of the neccessary data is missing, yeet
+                        if(VERBOSE)
+                            console.log("Missing data in /new_entry");
+                        return;
+                    }
+                } catch (error) {
+                    if(VERBOSE)
+                        console.log(error);
+                    return;
+                }
 
                 if (VERBOSE) {
                     console.log(content.user_id);
@@ -116,6 +140,7 @@ http.createServer(function (request, response) {
                     console.log(content.temperature);
                     console.log(content.humidity);
                 }
+
 
                 //prepare the "date" field
                 let date = new Date();
@@ -131,6 +156,24 @@ http.createServer(function (request, response) {
                         console.log("Logged...");
                 });
             } else if (request.url == "/authenticate") {
+                try {
+                    if(content.username === undefined || content.password === undefined){
+                        //if some part of the neccessary data is missing, yeet
+                        response.writeHead(400, { "Content-Type": "text/html" });
+                        response.end("BAD_USERNAME_OR_PASSWORD");
+                        if(VERBOSE)
+                            console.log("Missing data in /authenticate");
+                        return;
+                    }
+                } catch (error) {
+                    response.writeHead(400, { "Content-Type": "text/html" });
+                    response.end("BAD_USERNAME_OR_PASSWORD");
+                    
+                    if(VERBOSE)
+                        console.log(error);
+                    return;
+                }
+
                 if (VERBOSE) {
                     console.log(content.username);
                     console.log(content.password);
@@ -158,8 +201,31 @@ http.createServer(function (request, response) {
                             response.end("ERROR");
                         }
                     }
+                }).catch(()=> {
+                    response.writeHead(500, { "Content-Type": "text/html" });
+                    response.end("ERROR");
+                    if(VERBOSE)
+                        console.log("Failure in query execution...")
                 });
             } else if(request.url == "/new_user"){
+                try {
+                    if(content.username === undefined || content.password === undefined){
+                        //if some part of the neccessary data is missing, yeet
+                        response.writeHead(400, { "Content-Type": "text/html" });
+                        response.end("BAD_USERNAME_OR_PASSWORD");
+                        if(VERBOSE)
+                            console.log("Missing data in /new_entry");
+                        return;
+                    }
+                } catch (error) {
+                    response.writeHead(400, { "Content-Type": "text/html" });
+                    response.end("BAD_USERNAME_OR_PASSWORD");
+                    
+                    if(VERBOSE)
+                        console.log(error);
+                    return;
+                }
+
                 if(VERBOSE){
                     console.log(content.username);
                     console.log(content.password);
