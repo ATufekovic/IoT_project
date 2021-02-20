@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>IoT</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+        <script src="https://d3js.org/d3.v6.min.js"></script>
+    </head>
+
+    <body style="background-color: lightgrey" onload="loadData()">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-info justify-content-center">
+            <h4 class="text-white ml-3">Tuff Peder</h4>
+            <div class="navbar-nav ml-auto">
+                
+            </div>
+        </nav>
+
+        <div class="container-fluid p-5">
+            <div class="row">
+                <div class="col-xl-9" id="mainContainer">
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="graph"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            You are logged in as: <p class='text-info'>TVOJA MAMA PEDER</p>
+                            
+                            You aren't logged in! <br>
+                            Don't have an account? <br>
+                            <a href='register.php'>Make one now!</a>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            IoT seminarski rad <br>
+                            Robert Dumančić, Anto Tufeković 2020 <br>
+                            <a href="https://github.com/ATufekovic/IoT_project">github</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+
+    <script>
+        var data;
+        function loadData(){
+            fetch("http://89.172.232.211:8081/get_entries?userid=5e0a6e2d-90f6-45a5-ae1a-d26e8e42b68e&date=2021-02-20")
+                .then(obj => data = obj);
+        }
+
+        var containerWidth = document.getElementById("mainContainer").clientWidth;
+
+        var margin = {top: 10, right: 30, bottom: 30, left: 60},
+            width = containerWidth - margin.left - margin.right,
+            height = (width / 1.61) - margin.top - margin.bottom;
+
+        var svg = d3.select("#graph")
+            .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+                .attr("transform",
+                    "translate(" + margin.left + "," + margin.top + ")");
+
+        function resize() {
+            containerWidth = document.getElementById("mainContainer").clientWidth;
+            width = containerWidth - margin.left - margin.right;
+            height = (width / 1.61) - margin.top - margin.bottom;
+            d3.select("#graph svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+        }
+
+        var x = d3.scaleTime()
+            .domain(d3.extent(data, function(d) {
+                // TU STERAT DATUM OBJEKTA U NES STA SE DA SKALIRAT d3.timeParse("%Y-%m-%d")(d.date); return d.date; il kak se vise zove
+            }))
+            .range([0, width]);
+        svg.append("g")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x));
+
+        var y = d3.scaleLinear()
+            .domain([0, 40])
+            .range([height, 0 ]);
+        svg.append("g")
+            .call(d3.axisLeft(y));
+
+        svg.append("path")
+            .datum(data)
+            .attr("fill", "none")
+            .attr("stroke", "steelblue")
+            .attr("stroke-width", 1.5)
+            .attr("d", d3.line()
+                .x(function(d) { return x(d.date) })
+                .y(function(d) { return y(d.temperature) })
+                )
+
+        window.onresize = resize;
+
+    </script>
+</html>
