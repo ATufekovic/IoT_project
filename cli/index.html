@@ -127,6 +127,7 @@
         const regform = document.getElementById("regForm");
         const logform = document.getElementById("logForm");
         const chkBox = document.getElementById("hRadio");
+        const refreshBtn = document.getElementById("refreshBtn");
 
         var userid = "";
 
@@ -142,7 +143,7 @@
             Promise.all([
                 fetch("http://"+ tuffIP + ":8081/get_entries?userid=" + userid + "&date=" + today.getFullYear() 
                 + "-" + (today.getMonth() + 1) + "-" + (today.getDate()-1)),
-                fetch("http://"+ tuffIP + ":8081/get_entries?userid=5e0a6e2d-90f6-45a5-ae1a-d26e8e42b68e&date=" + today.getFullYear() 
+                fetch("http://"+ tuffIP + ":8081/get_entries?userid=" + userid + "&date=" + today.getFullYear() 
                 + "-" + (today.getMonth() + 1) + "-" + today.getDate())
             ]).then(function (responses) {
                 return Promise.all(responses.map(function (response) {
@@ -222,9 +223,17 @@
                 },
                 body: json,
             })
+            .then(function(response) {
+                if(!response.ok) {
+                    throw Error(response.statusText);
+                } return response
+            })
             .then(response => response.json())
             .then(response => userid = response)
             .then(() => loadData())
+            .catch(function(error) {
+                alert(error);
+            })
         }
 
         function POSTregData(json) {
@@ -235,6 +244,14 @@
                 },
                 body: json,
             })
+            .then(function(response) {
+                if(!response.ok) {
+                    throw Error(response.statusText);
+                } return response
+            })
+            .catch(function(error) {
+                alert(error);
+            })
         }
 
         // SVG Section - Mostly handles drawing the graph and its functions
@@ -244,6 +261,7 @@
 
         function initGraph() {
             statusMsg.innerHTML = "You are not logged in, log in to view your device data."
+            refreshBtn.disabled = true;
 
             containerWidth = document.getElementById("mainContainer").clientWidth;
 
@@ -334,6 +352,7 @@
             yt.domain([d3.min(data, function(d) { return d.temperature - 2;}), d3.max(data, function(d) { return d.temperature + 2;})]);
             dateLabel.innerHTML = "Data for: " + today.getDate() + "/" + today.getMonth() + "/" + today.getFullYear();
             statusMsg.innerHTML = "You are logged in. <br> Your userid is : " + userid;
+            refreshBtn.disabled = false;
         }
 
         function get_time_int(uuid_str) {
