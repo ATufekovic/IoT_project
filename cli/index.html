@@ -97,6 +97,7 @@
                     </div>
                     <div class="card mb-4">
                         <div class="card-body">
+                            <p id="currentHI"></p>
                             <input class="ml-1" type="checkbox" name="humidity" id="hRadio" onclick="toggleHumidity()">  Show Humidity <br>
                             <button class="btn btn-secondary mt-2" type="button" name="refreshBtn" id="refreshBtn" onclick="loadData()">Refresh Data</button>
                         </div>
@@ -128,8 +129,10 @@
         const logform = document.getElementById("logForm");
         const chkBox = document.getElementById("hRadio");
         const refreshBtn = document.getElementById("refreshBtn");
+        const currHI = document.getElementById("currentHI");
 
         var userid = "";
+        var lastJsonObj;
 
         let usnmSet = false;
         let pswSet = false;
@@ -353,6 +356,8 @@
             dateLabel.innerHTML = "Data for: " + today.getDate() + "/" + today.getMonth() + "/" + today.getFullYear();
             statusMsg.innerHTML = "You are logged in. <br> Your userid is : " + userid;
             refreshBtn.disabled = false;
+            lastJsonObj = data[data.length-1];
+            currHI.innerHTML = "Current Heat Index: " + calcHI(lastJsonObj.temperature, lastJsonObj.humidity);
         }
 
         function get_time_int(uuid_str) {
@@ -369,6 +374,12 @@
             var int_time = this.get_time_int( uuid_str ) - 122192928000000000,
                 int_millisec = Math.floor( int_time / 10000 );
             return new Date( int_millisec );
+        }
+
+        function calcHI(T, H) {
+            let HI = (-8.78469475556 + 1.61139411*T + 2.33854883889*H + (-0.14611605*T*H) + (-0.012308094*T*T) + (-0.0164248277778*H*H) +
+            0.002211732*T*T*H + 0.00072546*T*H*H + (-0.000003582*T*T*H*H));
+            return HI;
         }
         
         window.onresize = resize;
