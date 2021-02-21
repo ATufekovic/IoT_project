@@ -10,7 +10,7 @@
         <script src="https://d3js.org/d3.v6.min.js"></script>
     </head>
 
-    <body style="background-color: lightgrey" onload="loadData()">
+    <body style="background-color: lightgrey" onload="initGraph()">
         <nav class="navbar navbar-expand-lg bg-info text-white justify-content-center">
             <h4 class="ml-3">IoT - DHT11 Sensor Readings</h4>
             <div class="navbar-nav ml-auto">
@@ -92,7 +92,13 @@
                 <div class="col-xl-3">
                     <div class="card mb-4">
                         <div class="card-body">
-                            <button class="btn btn-secondary" type="button" name="refreshBtn" id="refreshBtn" onclick="loadData()">Refresh</button>
+                            <p id="status"></p>
+                        </div>
+                    </div>
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <input class="ml-1" type="checkbox" name="humidity" id="hRadio" onclick="toggleHumidity()">  Show Humidity <br>
+                            <button class="btn btn-secondary mt-2" type="button" name="refreshBtn" id="refreshBtn" onclick="loadData()">Refresh Data</button>
                         </div>
                     </div>
                     <div class="card">
@@ -114,12 +120,15 @@
         const currTemp = document.getElementById("currentTemp");
         const currHumi = document.getElementById("currentHumidity");
         const today = new Date();
-        dateLabel.innerHTML = "Data for: " + today.getDate() + "/" + today.getMonth() + "/" + today.getFullYear();
+        const statusMsg = document.getElementById("status");
         const usnm = document.getElementById("username");
         const psw = document.getElementById("password");
         const regBtn = document.getElementById("regBtn");
         const regform = document.getElementById("regForm");
         const logform = document.getElementById("logForm");
+        const chkBox = document.getElementById("hRadio");
+
+        var userid = "";
 
         let usnmSet = false;
         let pswSet = false;
@@ -131,7 +140,7 @@
 
         function loadData(){
             Promise.all([
-                fetch("http://"+ tuffIP + ":8081/get_entries?userid=5e0a6e2d-90f6-45a5-ae1a-d26e8e42b68e&date=" + today.getFullYear() 
+                fetch("http://"+ tuffIP + ":8081/get_entries?userid=" + userid + "&date=" + today.getFullYear() 
                 + "-" + (today.getMonth() + 1) + "-" + (today.getDate()-1)),
                 fetch("http://"+ tuffIP + ":8081/get_entries?userid=5e0a6e2d-90f6-45a5-ae1a-d26e8e42b68e&date=" + today.getFullYear() 
                 + "-" + (today.getMonth() + 1) + "-" + today.getDate())
@@ -201,7 +210,6 @@
             let formDeta = new FormData(event.target);
             let value = Object.fromEntries(formDeta.entries());
             let json = JSON.stringify(value);
-            console.log(json);
             POSTlogData(json);
             $("#loginModal").modal("toggle");
         }
@@ -214,6 +222,9 @@
                 },
                 body: json,
             })
+            .then(response => response.json())
+            .then(response => userid = response)
+            .then(() => loadData())
         }
 
         function POSTregData(json) {
@@ -228,28 +239,36 @@
 
         // SVG Section - Mostly handles drawing the graph and its functions
 
-        var containerWidth = document.getElementById("mainContainer").clientWidth;
+        var containerWidth, x, xAxis, margin, svg, yt, yh, yAxisH, yAxisT, tempLine, humiLine;
 
-        var margin = {top: 10, right: 40, bottom: 30, left: 20},
-            width = containerWidth - margin.left - margin.right,
-            height = (width / 1.61) - margin.top - margin.bottom;
 
-        var svg = d3.select("#graph")
-            .append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-                .attr("transform",
-                    "translate(" + margin.left + "," + margin.top + ")");
+        function initGraph() {
+            statusMsg.innerHTML = "You are not logged in, log in to view your device data."
 
-        var x = d3.scaleTime().range([0, width - margin.right]);
-        var xAxis = svg.append("g").attr("transform", "translate(0," + height + ")")
-        var yt = d3.scaleLinear().range([height, 0]);
-        var yh = d3.scaleLinear().range([height, 0]).domain([0,100]);
-        var yAxisT = svg.append("g");
-        var yAxisH = svg.append("g").attr("transform", "translate( " + (width - margin.right) + ", 0 )");
-        var tempLine = svg.append("path")
-        var humiLine = svg.append("path");
+            containerWidth = document.getElementById("mainContainer").clientWidth;
+
+            margin = {top: 10, right: 40, bottom: 30, left: 20},
+                width = containerWidth - margin.left - margin.right,
+                height = (width / 1.61) - margin.top - margin.bottom;
+
+            svg = d3.select("#graph")
+                .append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                    .attr("transform",
+                        "translate(" + margin.left + "," + margin.top + ")");
+
+            x = d3.scaleTime().range([0, width - margin.right]).domain([0,24]);
+            xAxis = svg.append("g").attr("transform", "translate(0," + height + ")").call(d3.axisBottom(x));
+
+            yt = d3.scaleLinear().range([height, 0]).domain([0,100]);
+            yh = d3.scaleLinear().range([height, 0]).domain([0,100]);
+            yAxisT = svg.append("g").call(d3.axisLeft(yt));
+            yAxisH = svg.append("g").attr("opacity", 0).attr("transform", "translate( " + (width - margin.right) + ", 0 )").call(d3.axisRight(yh));
+            tempLine = svg.append("path")
+            humiLine = svg.append("path").attr("stroke-width", 0);
+        }
 
         function resize() {
             containerWidth = document.getElementById("mainContainer").clientWidth;
@@ -263,7 +282,13 @@
             yAxisH.attr("transform", "translate( " + (width - margin.right) + ", 0 )");
             yt.range([height, 0])
             yh.range([height, 0]);
-            draw()
+            if(userid !== ""){
+                draw()
+            } else {
+                xAxis.call(d3.axisBottom(x));
+                yAxisT.call(d3.axisLeft(yt));
+                yAxisH.call(d3.axisRight(yh));
+            }
         }
 
         function draw(){
@@ -283,11 +308,20 @@
             humiLine.datum(data)
                 .attr("fill", "none")
                 .attr("stroke", "steelblue")
-                .attr("stroke-width", 1.5)
                 .attr("d", d3.line()
                     .x(function(d) { return x(d.ts) })
                     .y(function(d) { return yh(d.humidity) })
                     )
+        }
+
+        function toggleHumidity() {
+            if(chkBox.checked == true) {
+                humiLine.attr("stroke-width", 1.5);
+                yAxisH.attr("opacity", 100)
+            } else {
+                humiLine.attr("stroke-width", 0);
+                yAxisH.attr("opacity", 0);
+            }
         }
 
         function convertUUID() {
@@ -298,6 +332,8 @@
                 return d.ts;
             }))
             yt.domain([d3.min(data, function(d) { return d.temperature - 2;}), d3.max(data, function(d) { return d.temperature + 2;})]);
+            dateLabel.innerHTML = "Data for: " + today.getDate() + "/" + today.getMonth() + "/" + today.getFullYear();
+            statusMsg.innerHTML = "You are logged in. <br> Your userid is : " + userid;
         }
 
         function get_time_int(uuid_str) {
