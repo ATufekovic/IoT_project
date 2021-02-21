@@ -259,6 +259,6 @@ http.createServer(function (request, response) {
             
         });
     }
-}).listen(8081);
+}).listen(8081, "0.0.0.0");
 
 console.log('Server running at http://192.168.1.2:8081/');
