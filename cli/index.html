@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <title>IoT</title>
-        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonyhous">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
@@ -11,17 +11,78 @@
     </head>
 
     <body style="background-color: lightgrey" onload="loadData()">
-        <nav class="navbar navbar-expand-lg navbar-dark bg-info justify-content-center">
-            <h4 class="text-white ml-3">Tuff Peder</h4>
+        <nav class="navbar navbar-expand-lg bg-info text-white justify-content-center">
+            <h4 class="ml-3">IoT - DHT11 Senzor Readings</h4>
             <div class="navbar-nav ml-auto">
-                
+                <button class="btn btn-light mr-2" data-toggle="modal" data-target="#loginModal">Login</button>
+                <button class="btn btn-light" data-toggle="modal" data-target="#registerModal">Register</button>
             </div>
         </nav>
+
+        <div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="ModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title" id="LargeModalLabel">Login</h3>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="logForm">
+                            <div class="form-group">
+                                <label for="usr">Username:</label>
+                                <input type="text" class="form-control" id="usr" placeholder="Enter your username here">
+                            </div>
+                            <div class="form-group">
+                                <label for="pwd">Password:</label>
+                                <input type="password" class="form-control" id="pwd" placeholder="Enter your Password here">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="#registerModal" data-dismiss="modal" data-toggle="modal">Don't have an account? Make one here!</a>
+                        <button type="submit" class="btn btn-secondary" id="logBtn" form="logForm">Log In</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="registerModal" tabindex="-1" role="dialog" aria-labelledby="ModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title" id="LargeModalLabel">Register</h3>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="regForm">
+                            <div class="form-group">
+                                <label for="username">Username:</label>
+                                <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username here">
+                                <p class="text-muted">*Username must contain between 8 to 20 characters and can only contain letters, numbers and underscores.</p>
+                            </div>
+                            <div class="form-group">
+                                <label for="password">Password:</label>
+                                <input type="password" class="form-control" id="password" name="password" placeholder="Enter your Password here">
+                                <p class="text-muted">*Password has to be atleast 8 characters long.</p>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="#loginModal" data-dismiss="modal" data-toggle="modal">Already have an account?</a>
+                        <button type="submit" class="btn btn-secondary" id="regBtn" form="regForm">Register</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div class="container-fluid p-5">
             <div class="row">
                 <div class="col-xl-9" id="mainContainer">
-                    <div class="card">
+                    <div class="card mb-4">
                         <div class="card-body">
                             <h2 class="text-center" id="dateLabel"></h2>
                             <div id="graph"></div>
@@ -31,11 +92,7 @@
                 <div class="col-xl-3">
                     <div class="card mb-4">
                         <div class="card-body">
-                            You are logged in as: <p class='text-info'>TVOJA MAMA PEDER</p>
-                            
-                            You aren't logged in! <br>
-                            Don't have an account? <br>
-                            <a href='register.php'>Make one now!</a>
+                            <button class="btn btn-secondary" type="button" name="refreshBtn" id="refreshBtn">Refresh</button>
                         </div>
                     </div>
                     <div class="card">
@@ -51,29 +108,28 @@
     </body>
 
     <script>
-        var yest;
-        var tod;
         var data;
-        const tuffIP = "89.172.232.211";
+        const tuffIP = "93.141.134.247";
         const dateLabel = document.getElementById("dateLabel");
+        const currTemp = document.getElementById("currentTemp");
+        const currHumi = document.getElementById("currentHumidity");
         const today = new Date();
         dateLabel.innerHTML = "Data for: " + today.getDate() + "/" + today.getMonth() + "/" + today.getFullYear();
+        const usnm = document.getElementById("username");
+        const psw = document.getElementById("password");
+        const regBtn = document.getElementById("regBtn");
+        const regform = document.getElementById("regForm");
+        const logform = document.getElementById("logForm");
+
+        let usnmSet = false;
+        let pswSet = false;
+
+        regBtn.disabled = true;
+
+        regform.addEventListener("submit", regSubmit);
+        logform.addEventListener("submit", logSubmit);
 
         function loadData(){
-            /*fetch("http://"+ tuffIP + ":8081/get_entries?userid=5e0a6e2d-90f6-45a5-ae1a-d26e8e42b68e&date=" + today.getFullYear() 
-                + "-" + (today.getMonth() + 1) + "-" + (today.getDate()-1) + "")
-                .then(res => res.json())
-                .then(obj => yest = obj)
-                //.then(()=> this.convertUUID())
-                //.then(()=> this.draw())
-
-            fetch("http://"+ tuffIP + ":8081/get_entries?userid=5e0a6e2d-90f6-45a5-ae1a-d26e8e42b68e&date=" + today.getFullYear() 
-                + "-" + (today.getMonth() + 1) + "-" + today.getDate() + "")
-                .then(res => res.json())
-                .then(obj => tod = obj)
-                //.then(()=> this.convertUUID())
-                //.then(()=> this.draw())*/
-
             Promise.all([
                 fetch("http://"+ tuffIP + ":8081/get_entries?userid=5e0a6e2d-90f6-45a5-ae1a-d26e8e42b68e&date=" + today.getFullYear() 
                 + "-" + (today.getMonth() + 1) + "-" + (today.getDate()-1)),
@@ -86,14 +142,95 @@
             }).then((values) => {
                 data = values[0].concat(values[1]);
             })
-            .then(() => console.log(data))
             .then(() => this.convertUUID())
             .then(() => this.draw())
         }
 
+        usnm.addEventListener("keyup", (e) => {
+            var illegalChars = /\W/;
+            if (usnm.value == "") {
+                usnmSet = false;
+                regBtn.disabled = true;
+            } else if ((usnm.value.length < 8) || (usnm.value.length >= 20)) {
+                usnmSet = false;
+                regBtn.disabled = true;
+            } else if (illegalChars.test(usnm.value)) {
+                usnmSet = false;
+                regBtn.disabled = true;
+            } else {
+                usnmSet = true;
+                checkInputs(usnmSet, pswSet);
+            }
+        });
+
+        psw.addEventListener("keyup", (e) => {
+            if(psw.value == ""){
+                pswSet = false;
+                regBtn.disabled = true;
+            } else if((psw.value.length < 8) || (psw.value.length > 50)){
+                pswSet = false;
+                regBtn.disabled = true;
+            } else {
+                pswSet = true;
+                checkInputs(usnmSet, pswSet);
+            }
+        });
+
+        function checkInputs (userSet, passSet){
+            if(userSet && passSet){
+                regBtn.disabled = false;
+            } else {
+                regBtn.disabled = true;
+            }
+        }
+
+        function regSubmit(event) {
+            event.preventDefault();
+
+            let formDeta = new FormData(event.target);
+            let value = Object.fromEntries(formDeta.entries());
+            let json = JSON.stringify(value);
+
+            POSTregData(json);
+        }
+
+        function logSubmit(event) {
+            event.preventDefault();
+
+            let formDeta = new FormData(event.target);
+            let value = Object.fromEntries(formDeta.entries());
+            let json = JSON.stringify(value);
+
+            POSTlogData(json);
+        }
+
+        function POSTlogData(json) {
+            fetch("http://" + tuffIP + ":8081/authenticate", {
+                method: 'POST',
+                headers: {
+                    'Accept':'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: json,
+            })
+            .then(response=> response.json())
+        }
+
+        function POSTregData(json) {
+            fetch("http://" + tuffIP + ":8081/new_user", {
+                method: 'POST',
+                headers: {
+                    'Accept':'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: json,
+            })
+            .then(response=> response.json())
+        }
+
         var containerWidth = document.getElementById("mainContainer").clientWidth;
 
-        var margin = {top: 10, right: 30, bottom: 30, left: 30},
+        var margin = {top: 10, right: 40, bottom: 30, left: 20},
             width = containerWidth - margin.left - margin.right,
             height = (width / 1.61) - margin.top - margin.bottom;
 
@@ -107,9 +244,12 @@
 
         var x = d3.scaleTime().range([0, width - margin.right]);
         var xAxis = svg.append("g").attr("transform", "translate(0," + height + ")")
-        var y = d3.scaleLinear().range([height, 0 ]).domain([0, 40]);
-        var yAxis = svg.append("g");
-        var dataLine = svg.append("path");
+        var yt = d3.scaleLinear().range([height, 0]);
+        var yh = d3.scaleLinear().range([height, 0]).domain([0,100]);
+        var yAxisT = svg.append("g");
+        var yAxisH = svg.append("g").attr("transform", "translate( " + (width - margin.right) + ", 0 )");
+        var tempLine = svg.append("path")
+        var humiLine = svg.append("path");
 
         function resize() {
             containerWidth = document.getElementById("mainContainer").clientWidth;
@@ -120,21 +260,33 @@
                 .attr("height", height + margin.top + margin.bottom)
             x.range([0, width-margin.right])
             xAxis.attr("transform", "translate(0," + height + ")");
-            y.range([height, 0 ])
+            yAxisH.attr("transform", "translate( " + (width - margin.right) + ", 0 )");
+            yt.range([height, 0])
+            yh.range([height, 0]);
             draw()
         }
 
         function draw(){
             xAxis.call(d3.axisBottom(x).tickFormat(d3.timeFormat("%H:%M")));
-            yAxis.call(d3.axisLeft(y));
+            yAxisT.call(d3.axisLeft(yt));
+            yAxisH.call(d3.axisRight(yh));
 
-            dataLine.datum(data)
+            tempLine.datum(data)
+                .attr("fill", "none")
+                .attr("stroke", "red")
+                .attr("stroke-width", 1.5)
+                .attr("d", d3.line()
+                    .x(function(d) { return x(d.ts) })
+                    .y(function(d) { return yt(d.temperature) })
+                    )
+
+            humiLine.datum(data)
                 .attr("fill", "none")
                 .attr("stroke", "steelblue")
                 .attr("stroke-width", 1.5)
                 .attr("d", d3.line()
                     .x(function(d) { return x(d.ts) })
-                    .y(function(d) { return y(d.temperature) })
+                    .y(function(d) { return yh(d.humidity) })
                     )
         }
 
@@ -144,7 +296,8 @@
             })
             x.domain(d3.extent(data, function(d) {
                 return d.ts;
-            })) 
+            }))
+            yt.domain([d3.min(data, function(d) { return d.temperature - 2;}), d3.max(data, function(d) { return d.temperature + 2;})]);
         }
 
         function get_time_int(uuid_str) {
