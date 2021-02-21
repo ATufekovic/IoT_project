@@ -36,14 +36,14 @@ http.createServer(function (request, response) {
         let req_url = new URL(request.url, "http://" + request.headers.host);
 
         if (request.url == "/test" || request.url == "/") {
-            response.writeHead(200, { 'Content-Type': 'text/html', 'Access-Control-Allow-Origin':'*', 'Access-Control-Allow-Headers':'Origin, X-Requested-With, Content-Type, Accept'});
+            response.writeHead(200, { 'Content-Type': 'text/html', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept' });
             response.write(test_content);
             response.end();
             if (VERBOSE)
                 console.log('Served GET(test)...');
 
         } else if (req_url.pathname == "/get_entries") {
-            let queries = {userid:"",date:""};
+            let queries = { userid: "", date: "" };
             try {
                 req_url.searchParams.forEach((value, key) => {
                     queries[key] = value;
@@ -52,7 +52,7 @@ http.createServer(function (request, response) {
                 if (!(queries.userid.match(uuid_v4_simple_regex))) {
                     if (VERBOSE)
                         console.log("Match: " + queries.userid.match(uuid_v4_simple_regex));
-                    response.writeHead(400, { "Content-Type": "text/html" , "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Headers":"Origin, X-Requested-With, Content-Type, Accept"});
+                    response.writeHead(400, { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept" });
                     response.write("BAD_DATA");
                     response.end();
                     if (VERBOSE)
@@ -64,12 +64,12 @@ http.createServer(function (request, response) {
                 response.writeHead(400, { "Content-Type": "text/html" });
                 response.write("BAD_DATA");
                 response.end();
-                if(VERBOSE)
+                if (VERBOSE)
                     console.log("No data");
                 return;
             }
 
-            
+
 
             if (VERBOSE)
                 console.log(queries);
@@ -80,7 +80,7 @@ http.createServer(function (request, response) {
                 rows.push(row);
             }, () => {
                 console.log("Number of returned rows: " + rows.length);
-                response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Headers":"Origin, X-Requested-With, Content-Type, Accept" });
+                response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept" });
                 response.write(JSON.stringify(rows));
                 response.end();
                 if (VERBOSE)
@@ -88,7 +88,7 @@ http.createServer(function (request, response) {
             });
         }
         else {
-            response.writeHead(400, { 'Content-Type': 'text/html' , 'Access-Control-Allow-Origin':'*', 'Access-Control-Allow-Headers':'Origin, X-Requested-With, Content-Type, Accept'});
+            response.writeHead(400, { 'Content-Type': 'text/html', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept' });
             response.write("Nothing specified...");
             response.end();
             if (VERBOSE)
@@ -107,31 +107,31 @@ http.createServer(function (request, response) {
         request.on('end', () => {
             if (VERBOSE)
                 console.log("Body: " + body);
-            
+
             let content;
             try {
                 content = JSON.parse(body);
             } catch (error) {
-                if(VERBOSE)
+                if (VERBOSE)
                     console.log(error.message);
-                response.writeHead(500, { "Content-Type": "text/html" , "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Headers":"Origin, X-Requested-With, Content-Type, Accept"});
+                response.writeHead(500, { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept" });
                 response.end("ERROR_EXPECTED_JSON");
                 return;
             }
 
             if (request.url == "/new_entry") {
-                response.writeHead(200, { "Content-Type": "text/html" , "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Headers":"Origin, X-Requested-With, Content-Type, Accept"});
+                response.writeHead(200, { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept" });
                 response.end("OK");
 
                 try {
-                    if(content.user_id === undefined || content.device_id === undefined || content.temperature === undefined || content.humidity === undefined){
+                    if (content.user_id === undefined || content.device_id === undefined || content.temperature === undefined || content.humidity === undefined) {
                         //if some part of the neccessary data is missing, yeet
-                        if(VERBOSE)
+                        if (VERBOSE)
                             console.log("Missing data in /new_entry");
                         return;
                     }
                 } catch (error) {
-                    if(VERBOSE)
+                    if (VERBOSE)
                         console.log(error);
                     return;
                 }
@@ -159,19 +159,19 @@ http.createServer(function (request, response) {
                 });
             } else if (request.url == "/authenticate") {
                 try {
-                    if(content.username === undefined || content.password === undefined){
+                    if (content.username === undefined || content.password === undefined) {
                         //if some part of the neccessary data is missing, yeet
-                        response.writeHead(400, { "Content-Type": "text/html" , "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Headers":"Origin, X-Requested-With, Content-Type, Accept"});
+                        response.writeHead(400, { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept" });
                         response.end("BAD_USERNAME_OR_PASSWORD");
-                        if(VERBOSE)
+                        if (VERBOSE)
                             console.log("Missing data in /authenticate");
                         return;
                     }
                 } catch (error) {
-                    response.writeHead(400, { "Content-Type": "text/html" , "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Headers":"Origin, X-Requested-With, Content-Type, Accept"});
+                    response.writeHead(400, { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept" });
                     response.end("BAD_USERNAME_OR_PASSWORD");
-                    
-                    if(VERBOSE)
+
+                    if (VERBOSE)
                         console.log(error);
                     return;
                 }
@@ -184,80 +184,91 @@ http.createServer(function (request, response) {
                 let params = [content.username.trim(), content.password.trim()];
                 client.execute(query_POST_auth, params, { prepare: true }).then((result) => {
                     if (result.rows.length != 1) {
-                        response.writeHead(400, { "Content-Type": "text/html" , "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Headers":"Origin, X-Requested-With, Content-Type, Accept"});
+                        response.writeHead(400, { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept" });
                         response.end("BAD_USERNAME_OR_PASSWORD");
+                        if(VERBOSE)
+                            console.log("Bad username/password");
                     } else {
                         let uuid_result;
                         try {
                             uuid_result = result.rows[0].userid;
                             //probably no need to convert, since the bytes get implicitly converted to chars, atlest SOAPUI says so, try-catch block stays though
-                            if(VERBOSE)
+                            if (VERBOSE)
                                 console.log(uuid_result);
-                            response.writeHead(200, { "Content-Type": "application/json" , "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Headers":"Origin, X-Requested-With, Content-Type, Accept"});
+                            response.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept" });
                             response.write(JSON.stringify(uuid_result));
                             response.end();
                         } catch (error) {
-                            if(VERBOSE)
+                            if (VERBOSE)
                                 console.log(error);
-                            response.writeHead(500, { "Content-Type": "text/html" , "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Headers":"Origin, X-Requested-With, Content-Type, Accept"});
+                            response.writeHead(500, { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept" });
                             response.end("ERROR");
                         }
                     }
-                }).catch(()=> {
-                    response.writeHead(500, { "Content-Type": "text/html" , "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Headers":"Origin, X-Requested-With, Content-Type, Accept"});
+                }).catch(() => {
+                    response.writeHead(500, { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept" });
                     response.end("ERROR");
-                    if(VERBOSE)
+                    if (VERBOSE)
                         console.log("Failure in query execution...")
                 });
-            } else if(request.url == "/new_user"){
+            } else if (request.url == "/new_user") {
                 try {
-                    if(content.username === undefined || content.password === undefined){
+                    if (content.username === undefined || content.password === undefined) {
                         //if some part of the neccessary data is missing, yeet
-                        response.writeHead(400, { "Content-Type": "text/html" , "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Headers":"Origin, X-Requested-With, Content-Type, Accept"});
+                        response.writeHead(400, { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept" });
                         response.end("BAD_USERNAME_OR_PASSWORD");
-                        if(VERBOSE)
+                        if (VERBOSE)
                             console.log("Missing data in /new_entry");
                         return;
                     }
                 } catch (error) {
-                    response.writeHead(400, { "Content-Type": "text/html" , "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Headers":"Origin, X-Requested-With, Content-Type, Accept"});
+                    response.writeHead(400, { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept" });
                     response.end("BAD_USERNAME_OR_PASSWORD");
-                    
-                    if(VERBOSE)
+
+                    if (VERBOSE)
                         console.log(error);
                     return;
                 }
 
-                if(VERBOSE){
+                if (VERBOSE) {
                     console.log(content.username);
                     console.log(content.password);
                 }
 
                 let params = [content.username.trim()];
-                client.execute(query_POST_new_user_check, params, {prepare:true}).then((result)=>{
-                    if(result.rows[0].count != 0){
-                        if(VERBOSE)
+                client.execute(query_POST_new_user_check, params, { prepare: true }).then((result) => {
+                    if (result.rows[0].count != 0) {
+                        if (VERBOSE)
                             console.log("Username taken...")
-                        response.writeHead(400, { "Content-Type": "text/html" , "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Headers":"Origin, X-Requested-With, Content-Type, Accept"});
+                        response.writeHead(400, { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept" });
                         return response.end("USERNAME_TAKEN");
                     } else {
                         params = [content.username.trim(), content.password.trim()];
-                        client.execute(query_POST_new_user, params, {prepare:true}).then((result)=> {
-                            if(VERBOSE)
+                        client.execute(query_POST_new_user, params, { prepare: true }).then((result) => {
+                            if (VERBOSE)
                                 console.log(result);
-                            response.writeHead(200, { "Content-Type": "text/html" , "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Headers":"Origin, X-Requested-With, Content-Type, Accept"});
+                            response.writeHead(200, { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept" });
                             response.end("OK");
                         });
                     }
-                }).catch((result)=>{
-                    if(VERBOSE)
-                            console.log(result);
-                        response.writeHead(400, { "Content-Type": "text/html" , "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Headers":"Origin, X-Requested-With, Content-Type, Accept"});
-                        return response.end("BAD_USERNAME_OR_PASSWORD");
+                }).catch((result) => {
+                    if (VERBOSE)
+                        console.log(result);
+                    response.writeHead(200, {
+                        "Content-Type": "text/html",
+                        "Access-Control-Allow-Origin": "*",
+                        "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept" });
+                    return response.end("BAD_USERNAME_OR_PASSWORD");
                 });
             }
-            
+
         });
+    } else {
+        response.writeHead(200, { "Content-Type": "text/plain", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept" });
+        response.end("BAD_METHOD");
+        if (VERBOSE)
+            console.log("bad method");
+        return;
     }
 }).listen(8081);
 
