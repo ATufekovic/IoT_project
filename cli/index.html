@@ -23,6 +23,7 @@
                 <div class="col-xl-9" id="mainContainer">
                     <div class="card">
                         <div class="card-body">
+                            <h2 class="text-center" id="dateLabel"></h2>
                             <div id="graph"></div>
                         </div>
                     </div>
@@ -50,15 +51,49 @@
     </body>
 
     <script>
+        var yest;
+        var tod;
         var data;
+        const tuffIP = "89.172.232.211";
+        const dateLabel = document.getElementById("dateLabel");
+        const today = new Date();
+        dateLabel.innerHTML = "Data for: " + today.getDate() + "/" + today.getMonth() + "/" + today.getFullYear();
+
         function loadData(){
-            fetch("http://89.172.232.211:8081/get_entries?userid=5e0a6e2d-90f6-45a5-ae1a-d26e8e42b68e&date=2021-02-20")
-                .then(obj => data = obj);
+            /*fetch("http://"+ tuffIP + ":8081/get_entries?userid=5e0a6e2d-90f6-45a5-ae1a-d26e8e42b68e&date=" + today.getFullYear() 
+                + "-" + (today.getMonth() + 1) + "-" + (today.getDate()-1) + "")
+                .then(res => res.json())
+                .then(obj => yest = obj)
+                //.then(()=> this.convertUUID())
+                //.then(()=> this.draw())
+
+            fetch("http://"+ tuffIP + ":8081/get_entries?userid=5e0a6e2d-90f6-45a5-ae1a-d26e8e42b68e&date=" + today.getFullYear() 
+                + "-" + (today.getMonth() + 1) + "-" + today.getDate() + "")
+                .then(res => res.json())
+                .then(obj => tod = obj)
+                //.then(()=> this.convertUUID())
+                //.then(()=> this.draw())*/
+
+            Promise.all([
+                fetch("http://"+ tuffIP + ":8081/get_entries?userid=5e0a6e2d-90f6-45a5-ae1a-d26e8e42b68e&date=" + today.getFullYear() 
+                + "-" + (today.getMonth() + 1) + "-" + (today.getDate()-1)),
+                fetch("http://"+ tuffIP + ":8081/get_entries?userid=5e0a6e2d-90f6-45a5-ae1a-d26e8e42b68e&date=" + today.getFullYear() 
+                + "-" + (today.getMonth() + 1) + "-" + today.getDate())
+            ]).then(function (responses) {
+                return Promise.all(responses.map(function (response) {
+                    return response.json()
+                }));
+            }).then((values) => {
+                data = values[0].concat(values[1]);
+            })
+            .then(() => console.log(data))
+            .then(() => this.convertUUID())
+            .then(() => this.draw())
         }
 
         var containerWidth = document.getElementById("mainContainer").clientWidth;
 
-        var margin = {top: 10, right: 30, bottom: 30, left: 60},
+        var margin = {top: 10, right: 30, bottom: 30, left: 30},
             width = containerWidth - margin.left - margin.right,
             height = (width / 1.61) - margin.top - margin.bottom;
 
@@ -70,6 +105,12 @@
                 .attr("transform",
                     "translate(" + margin.left + "," + margin.top + ")");
 
+        var x = d3.scaleTime().range([0, width - margin.right]);
+        var xAxis = svg.append("g").attr("transform", "translate(0," + height + ")")
+        var y = d3.scaleLinear().range([height, 0 ]).domain([0, 40]);
+        var yAxis = svg.append("g");
+        var dataLine = svg.append("path");
+
         function resize() {
             containerWidth = document.getElementById("mainContainer").clientWidth;
             width = containerWidth - margin.left - margin.right;
@@ -77,33 +118,51 @@
             d3.select("#graph svg")
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
+            x.range([0, width-margin.right])
+            xAxis.attr("transform", "translate(0," + height + ")");
+            y.range([height, 0 ])
+            draw()
         }
 
-        var x = d3.scaleTime()
-            .domain(d3.extent(data, function(d) {
-                // TU STERAT DATUM OBJEKTA U NES STA SE DA SKALIRAT d3.timeParse("%Y-%m-%d")(d.date); return d.date; il kak se vise zove
-            }))
-            .range([0, width]);
-        svg.append("g")
-            .attr("transform", "translate(0," + height + ")")
-            .call(d3.axisBottom(x));
+        function draw(){
+            xAxis.call(d3.axisBottom(x).tickFormat(d3.timeFormat("%H:%M")));
+            yAxis.call(d3.axisLeft(y));
 
-        var y = d3.scaleLinear()
-            .domain([0, 40])
-            .range([height, 0 ]);
-        svg.append("g")
-            .call(d3.axisLeft(y));
+            dataLine.datum(data)
+                .attr("fill", "none")
+                .attr("stroke", "steelblue")
+                .attr("stroke-width", 1.5)
+                .attr("d", d3.line()
+                    .x(function(d) { return x(d.ts) })
+                    .y(function(d) { return y(d.temperature) })
+                    )
+        }
 
-        svg.append("path")
-            .datum(data)
-            .attr("fill", "none")
-            .attr("stroke", "steelblue")
-            .attr("stroke-width", 1.5)
-            .attr("d", d3.line()
-                .x(function(d) { return x(d.date) })
-                .y(function(d) { return y(d.temperature) })
-                )
+        function convertUUID() {
+            data.forEach(function(d) {
+                d.ts = get_date_obj(d.ts);
+            })
+            x.domain(d3.extent(data, function(d) {
+                return d.ts;
+            })) 
+        }
 
+        function get_time_int(uuid_str) {
+            var uuid_arr = uuid_str.split( '-' ),
+                time_str = [
+                    uuid_arr[ 2 ].substring( 1 ),
+                    uuid_arr[ 1 ],
+                    uuid_arr[ 0 ]
+                ].join( '' );
+            return parseInt( time_str, 16 );
+        }
+
+        function get_date_obj(uuid_str) {
+            var int_time = this.get_time_int( uuid_str ) - 122192928000000000,
+                int_millisec = Math.floor( int_time / 10000 );
+            return new Date( int_millisec );
+        }
+        
         window.onresize = resize;
 
     </script>
