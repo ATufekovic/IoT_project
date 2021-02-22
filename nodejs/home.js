@@ -1,6 +1,6 @@
 const http = require('http');
 const cassandra = require('cassandra-driver');
-//const uuid = require('uuid');
+const fs = require('fs');
 
 const client = new cassandra.Client({
     contactPoints: ['127.0.0.1'],
@@ -23,8 +23,9 @@ const query_POST_auth = "SELECT userid FROM users WHERE username = ? AND passwor
 const query_POST_new_user_check = "SELECT count(*) FROM users WHERE username = ?;";
 const query_POST_new_user = "INSERT INTO users (username, password, userid) VALUES (?, ?, uuid());";
 
-//this has to be solved client-side, eg. after logging in get userid and also the devices have to be settable to its users id
 const uuid_v4_simple_regex = "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}";
+
+const html_loc = "../cli/index.html";
 
 let test_content = "Please use the correct URLs.";
 
@@ -42,6 +43,9 @@ http.createServer(function (request, response) {
             if (VERBOSE)
                 console.log('Served GET(test)...');
 
+        } else if(request.url == "/html"){
+            response.writeHead(200, { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept" });
+            fs.createReadStream(html_loc).pipe(response);
         } else if (req_url.pathname == "/get_entries") {
             let queries = { userid: "", date: "" };
             try {
