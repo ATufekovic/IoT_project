@@ -14,8 +14,8 @@
         <nav class="navbar navbar-expand-lg bg-info text-white justify-content-center">
             <h4 class="ml-3">IoT - DHT11 Sensor Readings</h4>
             <div class="navbar-nav ml-auto">
-                <button class="btn btn-light mr-2" data-toggle="modal" data-target="#loginModal">Login</button>
-                <button class="btn btn-light" data-toggle="modal" data-target="#registerModal">Register</button>
+                <button class="btn btn-light mr-2 mb-1" data-toggle="modal" data-target="#loginModal" id="loginBtn">Login</button>
+                <button class="btn btn-light" data-toggle="modal" data-target="#registerModal" id="registerBtn">Register</button>
             </div>
         </nav>
 
@@ -116,7 +116,7 @@
 
     <script>
         var data;
-        const tuffIP = "93.141.134.247";
+        const tuffIP = "89.172.232.219";
         const dateLabel = document.getElementById("dateLabel");
         const currTemp = document.getElementById("currentTemp");
         const currHumi = document.getElementById("currentHumidity");
@@ -234,6 +234,7 @@
             .then(response => response.json())
             .then(response => userid = response)
             .then(() => loadData())
+            .then(() => removeBtn())
             .catch(function(error) {
                 alert(error);
             })
@@ -255,6 +256,14 @@
             .catch(function(error) {
                 alert(error);
             })
+        }
+
+        function removeBtn() {
+            let loginBtn = document.getElementById("loginBtn");
+            let registerBtn = document.getElementById("registerBtn");
+
+            loginBtn.style.display = "none";
+            registerBtn.style.display = "none";
         }
 
         // SVG Section - Mostly handles drawing the graph and its functions
