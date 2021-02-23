@@ -31,7 +31,19 @@ let test_content = "Please use the correct URLs.";
 
 http.createServer(function (request, response) {
 
-    if (request.method == "GET") {
+    if (request.method === 'OPTIONS') {
+        console.log('!OPTIONS');
+        var headers = {};
+        // IE8 does not allow domains to be specified, just the *
+        // headers["Access-Control-Allow-Origin"] = req.headers.origin;
+        headers["Access-Control-Allow-Origin"] = "*";
+        headers["Access-Control-Allow-Methods"] = "POST, GET, PUT, DELETE, OPTIONS";
+        headers["Access-Control-Allow-Credentials"] = false;
+        headers["Access-Control-Max-Age"] = '86400'; // 24 hours
+        headers["Access-Control-Allow-Headers"] = "X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept";
+        response.writeHead(200, headers);
+        response.end();
+    } else if (request.method == "GET") {
         if (VERBOSE)
             console.log("GET " + request.url);
         let req_url = new URL(request.url, "http://" + request.headers.host);
@@ -43,7 +55,7 @@ http.createServer(function (request, response) {
             if (VERBOSE)
                 console.log('Served GET(test)...');
 
-        } else if(request.url == "/html"){
+        } else if (request.url == "/html") {
             response.writeHead(200, { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept" });
             fs.createReadStream(html_loc).pipe(response);
         } else if (req_url.pathname == "/get_entries") {
@@ -190,7 +202,7 @@ http.createServer(function (request, response) {
                     if (result.rows.length != 1) {
                         response.writeHead(400, { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept" });
                         response.end("BAD_USERNAME_OR_PASSWORD");
-                        if(VERBOSE)
+                        if (VERBOSE)
                             console.log("Bad username/password");
                     } else {
                         let uuid_result;
@@ -261,7 +273,8 @@ http.createServer(function (request, response) {
                     response.writeHead(200, {
                         "Content-Type": "text/html",
                         "Access-Control-Allow-Origin": "*",
-                        "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept" });
+                        "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept"
+                    });
                     return response.end("BAD_USERNAME_OR_PASSWORD");
                 });
             }
